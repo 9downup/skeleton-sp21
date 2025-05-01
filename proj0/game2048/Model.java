@@ -113,13 +113,60 @@ public class Model extends Observable {
         // TODO: Modify this.board (and perhaps this.score) to account
         // for the tilt to the Side SIDE. If the board changed, set the
         // changed local variable to true.
+        //从第一列开始遍历
+        board.setViewingPerspective(side);
+        for(int col = 0;col<board.size();col++){
+            //因为每一行每次只能合并一次，所以先赋一个值
+            int mergeRow = board.size();
+            //不论合并还是移动最上面一行都不动，所以我们从第二行开始
+            for(int row = board.size()-2;row>=0;row--){
+                //拿到当前的瓷砖
+                Tile t = board.tile(col,row);
+                //如果为空直接看下一行的
+                if(t == null)continue;
+                //不为空直接看当前这块瓷砖上面的
+                for(int dest = row+1;dest<board.size();dest++){
+                    //拿到上面这块瓷砖
+                    Tile above = board.tile(col,dest);
+                    //只有第一行为空的瓷砖可以让t移动过去，要不如果第二行之类为空，万一第一行有数可以合并，或者第一行为空那么就不符合系统说明里的合并方式了
+                    //所以如果为空且不是第一行就直接往上看，跳过这一次循环
+                    if(above == null){
+                        if(dest == board.size()-1){
+                            board.move(col,dest,t);
+                            changed=true;
 
+                        }
+                        continue;
+                    } //能合并，更新合并行，因为是从上往下看，所以不用担心最后两个一样的合并了
+                    else if(above.value() == t.value() && dest<mergeRow){
+                        mergeRow = dest;
+                        board.move(col,dest,t);
+                        score += t.value()*2;
+                        changed = true;
+                        break;
+                    }//执行到这里，说明当前dest既不为空也不能合并，但是dest-1一定为空，因为我们之前的代码帮助我们筛选过了
+                    //dest为空，会往上走，并且这一行一定为空，dest不为空且能合并，就合并完看下一行了，dest不为空且不能合并，就会走到这里
+                    //此时要么dest-1就是row，要么就是空行
+                    else{
+                        if(dest-1!=row){
+                            board.move(col,dest-1,t);
+                            changed=true;
+
+                        }break;
+                    }
+                }
+            }
+        }
+        board.setViewingPerspective(Side.NORTH);
         checkGameOver();
         if (changed) {
             setChanged();
         }
         return changed;
     }
+
+
+
 
     /** Checks if the game is over and sets the gameOver variable
      *  appropriately.
@@ -138,6 +185,14 @@ public class Model extends Observable {
      * */
     public static boolean emptySpaceExists(Board b) {
         // TODO: Fill in this function.
+        for(int i =0;i < b.size();i++){
+            for (int j =0;j < b.size();j++){
+                if(b.tile(i,j) == null){
+                    return true;
+                }
+            }
+        }
+
         return false;
     }
 
@@ -148,6 +203,15 @@ public class Model extends Observable {
      */
     public static boolean maxTileExists(Board b) {
         // TODO: Fill in this function.
+        for(int i =0;i < b.size();i++){
+            for (int j =0;j < b.size();j++){
+                if(b.tile(i,j) == null){
+                    continue;
+                }else if(b.tile(i,j).value() == MAX_PIECE){
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
@@ -159,7 +223,31 @@ public class Model extends Observable {
      */
     public static boolean atLeastOneMoveExists(Board b) {
         // TODO: Fill in this function.
-        return false;
+        for(int i =0;i < b.size();i++) {
+            for (int j = 0; j < b.size(); j++) {
+                if (b.tile(i, j) == null) {
+                    return true;
+                }
+            }
+        }
+        //到这没有一个空的棋盘位
+        for(int i =0;i < b.size();i++){
+            for (int j =0;j < b.size();j++) {
+                int k = i+1;
+                int x = j+1;
+                if(k<b.size()){
+                    if(b.tile(i,j).value() == b.tile(k,j).value()){
+                        return true;
+                    }
+                }
+                if(x<b.size()) {
+                    if (b.tile(i, j).value() == b.tile(i, x).value()) {
+                        return true;
+                    }
+                }
+
+        }
+        }return false;
     }
 
 
